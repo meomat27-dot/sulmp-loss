@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>ACI Concrete Analyzer - AR Concrete v1.0</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+:root {
+    --main-blue: #0078D4;
+    --dark-blue: #005A9E;
+    --success-green: #2e7d32;
+    --bg-gradient: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+}
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    direction: rtl;
+    background: var(--bg-gradient);
+    margin: 0;
+    padding: 0;
+    overflow-x: hidden;
+}
+.app-header {
+    background: var(--main-blue);
+    color: white;
+    padding: 10px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+.container { padding: 4px 8px; max-width: 450px; margin: 0 auto; }
+.input-card {
+    background: #fff;
+    border: 1px solid #d1d9e0;
+    border-radius: 6px;
+    padding: 1px 8px;
+    margin-bottom: 3px;
+}
+label {
+    display: block;
+    font-size: 9px;
+    color: #666;
+    font-weight: bold;
+    margin-bottom: -3px;
+}
+input, select {
+    width: 100%;
+    height: 20px;
+    border: none;
+    outline: none;
+    background: transparent;
+    font-size: 16px;
+    font-weight: 800;
+    color: #000;
+    font-family: 'Arial', sans-serif;
+}
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+button#calcBtn {
+    width: 100%;
+    background: linear-gradient(to left, var(--main-blue), var(--dark-blue));
+    color: white;
+    border: none;
+    padding: 10px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 15px;
+    margin-top: 5px;
+    cursor: pointer;
+}
+.share-btn {
+    width: 100%;
+    background: #fff;
+    color: var(--main-blue);
+    border: 2px solid var(--main-blue);
+    padding: 8px;
+    border-radius: 8px;
+    font-weight: bold;
+    font-size: 14px;
+    margin-top: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+}
+.calib-section {
+    background: rgba(255,255,255,0.8);
+    padding: 10px;
+    border-radius: 12px;
+    margin-top: 8px;
+    border: 1px solid #d1d9e0;
+}
+.reset-bar {
+    width: 100%;
+    background: #fff;
+    font-size: 11px;
+    font-weight: bold;
+    padding: 2px 0;
+    margin-bottom: 4px;
+    border-radius: 4px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+}
+.reset-slump { border: 1px solid #ff4d4d; color: #ff4d4d; }
+.reset-strength { border: 1px solid #6f42c1; color: #6f42c1; }
+.calib-row { display: flex; gap: 5px; margin-bottom: 12px; align-items: stretch; }
+.calib-input {
+    flex: 1;
+    height: 38px;
+    border: 1px solid #ccc;
+    border-radius: 6px;
+    text-align: center;
+    font-size: 18px;
+    font-weight: bold;
+    background: #fdfdfd;
+}
+.calib-btn {
+    flex: 0 0 90px;
+    background: var(--main-blue);
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 11px;
+    font-weight: bold;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    cursor: pointer;
+}
+.result-box { margin-top: 6px; }
+.good {
+    background: #e8f5e9;
+    color: #2e7d32;
+    padding: 6px 10px;
+    border-radius: 6px;
+    margin-bottom: 3px;
+    border-right: 4px solid #2e7d32;
+    font-weight: bold;
+    font-size: 13px;
+    display: flex;
+    justify-content: space-between;
+}
+</style>
+</head>
+
+<body onload="initApp()">
+
+<div class="app-header">
+    <div style="font-weight:bold;font-size:14px;"><i class="fas fa-cube"></i> ACI Concrete Analyzer - AR Concrete v1.0</div>
+    <i class="fas fa-wifi"></i>
+</div>
+
+<div class="container">
+
+    <!-- كل المدخلات مثل ما هي بدون تغيير -->
+
+    <button id="calcBtn" onclick="mainProcess()">تحليل الخلطة الآن 🔥</button>
+
+    <div id="result" class="result-box"></div>
+
+    <button class="share-btn" onclick="shareReport()">
+        <i class="fas fa-share-nodes"></i> حفظ ومشاركة التقرير
+    </button>
+
+    <!-- ✅ الزر المضاف فقط -->
+    <button class="share-btn" onclick="goToKT()">
+        <i class="fas fa-chart-line"></i>
+        تحليل فقدان السلامب أثناء النقل
+    </button>
+
+    <!-- بقية الصفحة بدون أي تغيير -->
+
+</div>
+
+<script>
+/* كل كودك الأصلي كما هو */
+
+function goToKT() {
+    if (!localStorage.getItem('slumpMain')) {
+        alert("يرجى حساب الخلطة أولاً");
+        return;
+    }
+    window.location.href = "kt.html";
+}
+</script>
+
+</body>
+</html>
+

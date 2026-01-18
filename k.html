@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>تحليل فقدان السلامب</title>
+<style>
+:root { --primary: #005f73; --accent: #ee9b00; --bg: #f0f2f5; --card: #ffffff; }
+body { font-family: 'Segoe UI', Tahoma, sans-serif; background: var(--bg); margin: 0; padding: 15px; direction: rtl; }
+.container { max-width: 500px; margin: auto; }
+.stats-bar { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 15px; }
+.stat-box { background: var(--card); padding: 10px; border-radius: 8px; text-align: center; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+.stat-box span { font-size: 11px; color: #666; display: block; }
+.stat-box b { font-size: 18px; color: var(--primary); }
+.input-section { background: #fff; padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid #ddd; }
+input#travelTime { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; box-sizing: border-box; }
+canvas { width: 100% !important; height: 250px !important; background: #fff; border-radius: 8px; margin-top: 10px; }
+.btn { display: block; width: 100%; text-align: center; padding: 12px; background: var(--primary); color: #fff; text-decoration: none; border-radius: 8px; margin-top: 10px; font-weight: bold; border:none; cursor:pointer;}
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h3 style="text-align:center; color:var(--primary);">تحليل فقدان السلامب (Z)</h3>
+
+    <div class="input-section">
+        <label style="font-size:12px; font-weight:bold;">زمن الوصول للموقع (دقيقة):</label>
+        <input type="number" id="travelTime" value="45" oninput="calculateLoss()">
+    </div>
+
+    <div class="stats-bar">
+        <div class="stat-box"><span>سلامب المعمل</span><b id="sLab">--</b></div>
+        <div class="stat-box"><span>سلامب الموقع المتوقع</span><b id="sSite">--</b></div>
+        <div class="stat-box"><span>إجمالي الفقد</span><b id="sLoss">--</b></div>
+        <div class="stat-box"><span>الحالة</span><b id="sStatus" style="font-size:14px">--</b></div>
+    </div>
+
+    <canvas id="slumpChart"></canvas>
+    
+    <button onclick="window.history.back()" class="btn" style="background:#666">العودة للبيانات</button>
+</div>
+
+<script>
+function calculateLoss() {
+    const data = JSON.parse(localStorage.getItem('slumpMain'));
+    if(!data) { alert("يرجى حساب الخلطة في الصفحة الأولى أولاً"); return; }
+
+    const S0 = data.slump_initial; // السلامب القادم من الصفحة الأولى
+    const time = parseFloat(document.getElementById('travelTime').value) || 0;
+    const temp = data.temp || 20;
+
+    // معادلة هندسية تقريبية للفقدان بناءً على الوقت والحرارة
+    // الفقد يزداد مع الحرارة (معامل 0.04 سم/دقيقة عند 20 درجة، يزداد مع الحرارة)
+    let lossFactor = 0.04 + (temp > 25 ? (temp - 25) * 0.005 : 0);
+    const deltaS = Math.min(S0 - 2, time * lossFactor); 
+    const ST = S0 - deltaS;
+
+    document.getElementById('sLab').innerText = S0 + " سم";
+    document.getElementById('sSite').innerText = ST.toFixed(1) + " سم";
+    document.getElementById('sLoss').innerText = deltaS.toFixed(1) + " سم";
+    document.getElementById('sStatus').innerText = ST < 10 ? "جفاف عالي" : "مقبول";
+
+    drawChart(S0, ST, time);
+}
+
+function drawChart(S0, ST, totalTime) {
+    const canvas = document.getElementById("slumpChart");
+    const ctx = canvas.getContext("2d");
+    const w = canvas.width, h = canvas.height;
+    ctx.clearRect(0,0,w,h);
+
+    const getX = t => 40 + t*(w-60)/totalTime;
+    const getY = s => h-30 - s*(h-50)/Math.max(30, S0);
+
+    // الرسم
+    ctx.strokeStyle="#eee"; ctx.beginPath();
+    for(let i=0; i<=S0; i+=5) { 
+        let y = getY(i); ctx.moveTo(40,y); ctx.lineTo(w-20,y); 
+        ctx.fillStyle="#999"; ctx.font="10px Arial"; ctx.fillText(i, 10, y+5);
+    }
+    ctx.stroke();
+
+    // الخط البياني
+    ctx.beginPath();
+    ctx.strokeStyle= "#005f73"; ctx.lineWidth=3;
+    ctx.moveTo(getX(0), getY(S0));
+    ctx.lineTo(getX(totalTime), getY(ST));
+    ctx.stroke();
+
+    // نقطة النهاية
+    ctx.fillStyle="#ee9b00";
+    ctx.beginPath(); ctx.arc(getX(totalTime), getY(ST), 5, 0, Math.PI*2); ctx.fill();
+}
+
+window.onload = calculateLoss;
+</script>
+</body>
+</html>
